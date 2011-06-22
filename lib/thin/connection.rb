@@ -126,11 +126,19 @@ module Thin
       end
     end
 
-    # Logs catched exception and closes the connection.
+    # Logs catched exception and sends a 500 response
     def handle_error
       log "!! Unexpected error while processing request: #{$!.message}"
       log_error
-      close_connection rescue nil
+
+      @response.status = 500
+      @response.body = ""
+
+      # Send the 500 response
+      @response.each do |chunk|
+        trace { chunk }
+        send_data chunk
+      end
     end
 
     def close_request_response
